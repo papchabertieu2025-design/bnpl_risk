@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>BNPL Instalment Risk</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <main>
+    <header>
+      <p class="eyebrow">Fintech Technology with Impact · Credit risk</p>
+      <h1>BNPL Instalment Risk</h1>
+      <p class="lead">
+        Buy Now, Pay Later apps approve small loans in seconds, and customers can stack
+        several plans at once. This tool predicts whether a customer will
+        <strong>miss their next instalment</strong>, so the app can send a reminder,
+        offer support, or pause new plans before the customer falls into arrears.
+      </p>
+    </header>
+
+    <div class="grid">
+      <section class="card">
+        <h2>Customer details</h2>
+        <form method="post" action="/">
+          <label for="number_of_active_plans">Number of active BNPL plans</label>
+          <span class="hint">Plans currently open, from 1 to 8</span>
+          <input type="number" id="number_of_active_plans" name="number_of_active_plans"
+                 min="1" max="8" step="1" required
+                 value="{{ values.get('number_of_active_plans', '3') }}">
+
+          <label for="monthly_income">Monthly net income (€)</label>
+          <span class="hint">Take-home pay per month</span>
+          <input type="number" id="monthly_income" name="monthly_income"
+                 min="0" max="20000" step="0.01" required
+                 value="{{ values.get('monthly_income', '1800') }}">
+
+          <label for="outstanding_bnpl_balance">Outstanding BNPL balance (€)</label>
+          <span class="hint">Total still owed across all BNPL plans</span>
+          <input type="number" id="outstanding_bnpl_balance" name="outstanding_bnpl_balance"
+                 min="0" max="10000" step="0.01" required
+                 value="{{ values.get('outstanding_bnpl_balance', '900') }}">
+
+          <button type="submit">Predict risk</button>
+        </form>
+      </section>
+
+      <section class="card result">
+        <h2>Prediction</h2>
+        {% if errors %}
+          <div class="errors">
+            {% for e in errors %}<p>{{ e }}</p>{% endfor %}
+          </div>
+        {% elif result %}
+          <p class="band band-{{ result.risk_band | lower }}">{{ result.risk_band }} risk</p>
+          <p class="label">{{ result.prediction_label }}</p>
+          <p class="prob">
+            <span class="big">{{ '%.1f' | format(result.probability_missed_instalment * 100) }}%</span>
+            probability of missing the next instalment
+          </p>
+          <div class="meter" aria-hidden="true">
+            <div style="width: {{ result.probability_missed_instalment * 100 }}%"></div>
+          </div>
+          <p class="rec"><strong>Suggested action:</strong> {{ result.recommendation }}</p>
+        {% else %}
+          <p class="empty">Enter the customer's details and press <em>Predict risk</em>.</p>
+        {% endif %}
+      </section>
+    </div>
+
+    <section class="card about">
+      <h2>How it works</h2>
+      <p>
+        A logistic-regression model trained on 1,000 synthetic BNPL customers
+        (76% accuracy on test data). More open plans and a higher balance raise the risk;
+        a higher income lowers it. Risk bands: Low &lt; 30%, Medium 30–60%, High ≥ 60%.
+      </p>
+      <h3>API</h3>
+      <p>Other applications can call the same model and get JSON back:</p>
+      <pre>GET /api/predict?number_of_active_plans=5&amp;monthly_income=1200&amp;outstanding_bnpl_balance=2200</pre>
+      <p><a href="/api/predict?number_of_active_plans=5&monthly_income=1200&outstanding_bnpl_balance=2200">Try the example request</a></p>
+    </section>
+  </main>
+</body>
+</html>
